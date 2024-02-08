@@ -1,12 +1,22 @@
 package org.scaler.userservice.services;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.scaler.userservice.dtos.SignUpRequestDto;
 import org.scaler.userservice.exceptions.InvalidPasswordException;
+import org.scaler.userservice.exceptions.TokenAlreadyExpiredOrNotFoundException;
 import org.scaler.userservice.exceptions.UserNotFoundException;
+import org.scaler.userservice.models.Name;
+import org.scaler.userservice.models.Token;
 import org.scaler.userservice.models.User;
+import org.scaler.userservice.repositories.TokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.scaler.userservice.repositories.UserRepository;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,10 +24,15 @@ import java.util.Optional;
 public class SelfUserService implements UserService{
 
     private UserRepository userRepository;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    private TokenRepository tokenRepository;
 
     @Autowired
-    public SelfUserService(UserRepository userRepository) {
+    public SelfUserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, TokenRepository tokenRepository) {
         this.userRepository = userRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.tokenRepository = tokenRepository;
     }
 
 
@@ -40,6 +55,16 @@ public class SelfUserService implements UserService{
     public User createUser(User user) {
         return userRepository.save(user);
 
+    }
+    @Override
+    public User signUp(SignUpRequestDto signUpRequestDto){
+        User user = new User();
+        user.setEmail(signUpRequestDto.getEmail());
+        user.setHashedPassword(bCryptPasswordEncoder.encode(signUpRequestDto.getPassword()));
+        Name name = new Name();
+        name.setFirstName(signUpRequestDto.getName());
+        user.setName(name);
+        return userRepository.save(user);
     }
 
     @Override
@@ -84,15 +109,43 @@ public class SelfUserService implements UserService{
         return userFromDB;
     }
     @Override
-    public User login(String email, String password) throws UserNotFoundException, InvalidPasswordException {
+    public Token login(String email, String password) throws UserNotFoundException, InvalidPasswordException {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if(userOptional.isEmpty()){
             throw new UserNotFoundException("User with email: "+email+" doesn't exist.");
         }
         User user = userOptional.get();
-        if(user.getHashedPassword().equals(password)){
-            return user;
+        if(!bCryptPasswordEncoder.matches(password, user.getHashedPassword())){
+            throw new InvalidPasswordException("Invalid password for email: "+email);
         }
-        throw new InvalidPasswordException("Invalid password for email: "+email);
+        Token token = new Token();
+        token.setUser(user);
+        LocalDate today = LocalDate.now();
+        LocalDate thirtyDaysLater = today.plusDays(30);
+        Date expiryDate = Date.from(thirtyDaysLater.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        token.setExpiryDate(expiryDate);
+        token.setToken(RandomStringUtils.randomAlphabetic(128));
+        tokenRepository.save(token);
+        return token;
+    }
+    @Override
+    public void logout(String token) throws TokenAlreadyExpiredOrNotFoundException {
+        Optional<Token> tokenOptional = tokenRepository.findByTokenAndDeleted(token, false);
+        if(tokenOptional.isPresent()){
+            Token tokenFromDB = tokenOptional.get();
+            tokenFromDB.setDeleted(true);
+            tokenRepository.save(tokenFromDB);
+        }else{
+            throw new TokenAlreadyExpiredOrNotFoundException("Token is already expired or not found.");
+        }
+    }
+
+    @Override
+    public User validateToken(String token) throws TokenAlreadyExpiredOrNotFoundException {
+        Optional<Token> tokenOptional = tokenRepository.findByTokenAndDeletedAndExpiryDateGreaterThan(token, false, new Date());
+        if (tokenOptional.isPresent()) {
+            return tokenOptional.get().getUser();
+        }
+        throw new TokenAlreadyExpiredOrNotFoundException("Token is already expired or not found.");
     }
 }

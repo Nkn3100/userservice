@@ -1,17 +1,22 @@
 package org.scaler.userservice.controllers;
 
 import org.scaler.userservice.dtos.LoginRequestDto;
+import org.scaler.userservice.dtos.LogoutRequestDto;
 import org.scaler.userservice.dtos.SignUpRequestDto;
 import org.scaler.userservice.exceptions.InvalidPasswordException;
+import org.scaler.userservice.exceptions.TokenAlreadyExpiredOrNotFoundException;
 import org.scaler.userservice.exceptions.UserNotFoundException;
 import org.scaler.userservice.models.Name;
+import org.scaler.userservice.models.Token;
 import org.scaler.userservice.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import org.scaler.userservice.services.UserService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -45,8 +50,8 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @GetMapping("/login")
-    public User login(@RequestBody LoginRequestDto loginRequestDto) throws UserNotFoundException, InvalidPasswordException {
+    @PostMapping("/login")
+    public Token login(@RequestBody LoginRequestDto loginRequestDto) throws UserNotFoundException, InvalidPasswordException {
         // check if email and password in db
         // if yes return user
         // else throw some error
@@ -59,17 +64,18 @@ public class UserController {
         // just store user as is in the db
         // for now no need to have email verification either
         // just store user and return user
-        User user = new User();
-        user.setEmail(signUpRequestDto.getEmail());
-        user.setHashedPassword(signUpRequestDto.getPassword());
-        Name name = new Name();
-        name.setFirstName(signUpRequestDto.getName());
-        user.setName(name);
-        return userService.createUser(user);
+
+        return userService.signUp(signUpRequestDto);
 
     }
-    public ResponseEntity<Void> logout(){
-        //TODO: implement logout
-        return null;
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto logoutRequestDto) throws TokenAlreadyExpiredOrNotFoundException {
+        userService.logout(logoutRequestDto.getToken());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/validate/{token}")
+    public User validateToken(@PathVariable("token") @NonNull String token) throws TokenAlreadyExpiredOrNotFoundException {
+        return userService.validateToken(token);
     }
 }

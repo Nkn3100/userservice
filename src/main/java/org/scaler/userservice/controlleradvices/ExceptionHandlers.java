@@ -23,4 +23,11 @@ public class ExceptionHandlers {
             exceptionDto.setDetail(exception.getMessage());
             return ResponseEntity.ok(exceptionDto);
         }
+        @ExceptionHandler
+    public ResponseEntity<ExceptionDto> handleTokenAlreadyExpiredOrNotFoundException(Exception exception) {
+        ExceptionDto exceptionDto = new ExceptionDto();
+        exceptionDto.setMessage("Token already expired or not found");
+        exceptionDto.setDetail(exception.getMessage());
+        return ResponseEntity.ok(exceptionDto);
+    }
 }

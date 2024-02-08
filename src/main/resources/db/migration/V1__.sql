@@ -3,7 +3,7 @@ CREATE TABLE address
     id              BIGINT NOT NULL,
     created_at      datetime NULL,
     last_updated_at datetime NULL,
-    is_deleted      BIT(1) NOT NULL,
+    deleted         BIT(1) NOT NULL,
     city            VARCHAR(255) NULL,
     street          VARCHAR(255) NULL,
     number          INT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE geo_location
     id              BIGINT NOT NULL,
     created_at      datetime NULL,
     last_updated_at datetime NULL,
-    is_deleted      BIT(1) NOT NULL,
+    deleted         BIT(1) NOT NULL,
     latitude DOUBLE NULL,
     longitude DOUBLE NULL,
     CONSTRAINT pk_geolocation PRIMARY KEY (id)
@@ -29,7 +29,7 @@ CREATE TABLE name
     id              BIGINT NOT NULL,
     created_at      datetime NULL,
     last_updated_at datetime NULL,
-    is_deleted      BIT(1) NOT NULL,
+    deleted         BIT(1) NOT NULL,
     first_name      VARCHAR(255) NULL,
     last_name       VARCHAR(255) NULL,
     CONSTRAINT pk_name PRIMARY KEY (id)
@@ -40,7 +40,7 @@ CREATE TABLE `role`
     id              BIGINT NOT NULL,
     created_at      datetime NULL,
     last_updated_at datetime NULL,
-    is_deleted      BIT(1) NOT NULL,
+    deleted         BIT(1) NOT NULL,
     name            VARCHAR(255) NULL,
     CONSTRAINT pk_role PRIMARY KEY (id)
 );
@@ -50,7 +50,7 @@ CREATE TABLE token
     id              BIGINT NOT NULL,
     created_at      datetime NULL,
     last_updated_at datetime NULL,
-    is_deleted      BIT(1) NOT NULL,
+    deleted         BIT(1) NOT NULL,
     token           VARCHAR(255) NULL,
     user_id         BIGINT NULL,
     expiry_date     datetime NULL,
@@ -62,7 +62,7 @@ CREATE TABLE user
     id                BIGINT NOT NULL,
     created_at        datetime NULL,
     last_updated_at   datetime NULL,
-    is_deleted        BIT(1) NOT NULL,
+    deleted           BIT(1) NOT NULL,
     email             VARCHAR(255) NULL,
     hashed_password   VARCHAR(255) NULL,
     username          VARCHAR(255) NULL,
