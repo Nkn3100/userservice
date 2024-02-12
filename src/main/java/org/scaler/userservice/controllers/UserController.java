@@ -3,6 +3,7 @@ package org.scaler.userservice.controllers;
 import org.scaler.userservice.dtos.LoginRequestDto;
 import org.scaler.userservice.dtos.LogoutRequestDto;
 import org.scaler.userservice.dtos.SignUpRequestDto;
+import org.scaler.userservice.dtos.UserDto;
 import org.scaler.userservice.exceptions.InvalidPasswordException;
 import org.scaler.userservice.exceptions.TokenAlreadyExpiredOrNotFoundException;
 import org.scaler.userservice.exceptions.UserNotFoundException;
@@ -75,7 +76,7 @@ public class UserController {
     }
 
     @PostMapping("/validate/{token}")
-    public User validateToken(@PathVariable("token") @NonNull String token) throws TokenAlreadyExpiredOrNotFoundException {
-        return userService.validateToken(token);
+    public UserDto validateToken(@PathVariable("token") @NonNull String token) throws TokenAlreadyExpiredOrNotFoundException {
+        return UserDto.from(userService.validateToken(token));
     }
 }

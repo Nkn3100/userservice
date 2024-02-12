@@ -2,6 +2,7 @@ package org.scaler.userservice.controlleradvices;
 
 import org.scaler.userservice.dtos.ExceptionDto;
 import org.scaler.userservice.exceptions.InvalidPasswordException;
+import org.scaler.userservice.exceptions.TokenAlreadyExpiredOrNotFoundException;
 import org.scaler.userservice.exceptions.UserNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -23,7 +24,7 @@ public class ExceptionHandlers {
             exceptionDto.setDetail(exception.getMessage());
             return ResponseEntity.ok(exceptionDto);
         }
-        @ExceptionHandler
+        @ExceptionHandler(TokenAlreadyExpiredOrNotFoundException.class)
     public ResponseEntity<ExceptionDto> handleTokenAlreadyExpiredOrNotFoundException(Exception exception) {
         ExceptionDto exceptionDto = new ExceptionDto();
         exceptionDto.setMessage("Token already expired or not found");
